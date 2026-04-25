@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>QuizMaster</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="static/css/style.css"/>
+</head>
+<body>
+
+<div id="toast" class="toast"></div>
+
+<!-- ═══════════ NAV ═══════════ -->
+<nav class="navbar" id="navbar">
+  <a class="logo" href="#" onclick="navigate('home')">Quiz<span>Master</span></a>
+  <div class="nav-center" id="nav-links">
+    <button class="nav-btn" onclick="navigate('home')">Home</button>
+    <button class="nav-btn" id="nav-quizzes" onclick="navigate('quizzes')" style="display:none">Browse</button>
+    <button class="nav-btn" id="nav-history" onclick="navigate('history')" style="display:none">My Results</button>
+    <button class="nav-btn" id="nav-admin" onclick="navigate('admin')" style="display:none">Admin</button>
+  </div>
+  <div class="nav-right">
+    <div id="nav-auth-btns">
+      <button class="btn-ghost" onclick="openModal('login-modal')">Login</button>
+      <button class="btn-primary" onclick="openModal('register-modal')">Sign Up</button>
+    </div>
+    <div id="nav-user" style="display:none">
+      <span class="user-greeting" id="user-greeting">Hi, User</span>
+      <button class="btn-ghost" onclick="logout()">Logout</button>
+    </div>
+  </div>
+</nav>
+
+<!-- ═══════════ PAGE: HOME ═══════════ -->
+<div id="page-home" class="page active">
+  <section class="hero">
+    <div class="hero-noise"></div>
+    <div class="hero-glow g1"></div>
+    <div class="hero-glow g2"></div>
+    <div class="hero-content">
+      <div class="hero-eyebrow"><span class="dot"></span> Online Quiz Platform</div>
+      <h1 class="hero-title">Learn. Test.<br/><em>Grow.</em></h1>
+      <p class="hero-desc">A modern quiz management system for students & educators. Take timed quizzes, get instant feedback, and track your progress — all in one place.</p>
+      <div class="hero-cta">
+        <button class="btn-hero" onclick="requireLogin(() => navigate('quizzes'))">Browse Quizzes →</button>
+        <button class="btn-hero-ghost" onclick="openModal('register-modal')">Create Account</button>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="hv-card hv1"><div class="hvc-icon">🏆</div><div class="hvc-label">Top Score</div><div class="hvc-val">100%</div></div>
+      <div class="hv-card hv2"><div class="hvc-icon">⚡</div><div class="hvc-label">Avg Response</div><div class="hvc-val">12s</div></div>
+      <div class="hv-card hv3"><div class="hvc-icon">📚</div><div class="hvc-label">Questions</div><div class="hvc-val" id="home-q-count">—</div></div>
+      <div class="hv-card hv4"><div class="hvc-icon">👥</div><div class="hvc-label">Quizzes</div><div class="hvc-val" id="home-quiz-count">—</div></div>
+    </div>
+  </section>
+  <section class="features-strip">
+    <div class="fs-item"><div class="fs-icon">⏱️</div><div><strong>Timed Questions</strong><p>Beat the clock on every question</p></div></div>
+    <div class="fs-item"><div class="fs-icon">🔍</div><div><strong>Answer Review</strong><p>See explanations for every answer</p></div></div>
+    <div class="fs-item"><div class="fs-icon">📊</div><div><strong>Progress Tracking</strong><p>View your quiz history anytime</p></div></div>
+    <div class="fs-item"><div class="fs-icon">🛠️</div><div><strong>Admin Tools</strong><p>Create & manage quizzes easily</p></div></div>
+  </section>
+</div>
+
+<!-- ═══════════ PAGE: QUIZZES ═══════════ -->
+<div id="page-quizzes" class="page">
+  <div class="page-header">
+    <h2>Browse Quizzes</h2>
+    <p>Pick a quiz and test your knowledge!</p>
+  </div>
+  <div class="quiz-grid-container">
+    <div id="quiz-grid" class="quiz-grid"><div class="loading-spinner">Loading quizzes…</div></div>
+  </div>
+</div>
+
+<!-- ═══════════ PAGE: QUIZ (taking) ═══════════ -->
+<div id="page-quiz" class="page quiz-page">
+  <div class="quiz-topbar">
+    <div class="qtb-left">
+      <button class="qtb-quit" onclick="quitQuiz()">✕ Quit</button>
+      <span id="qtb-title">Quiz Title</span>
+    </div>
+    <div class="qtb-progress-wrap">
+      <div class="qtb-progress"><div id="qtb-fill"></div></div>
+      <span id="qtb-counter">1 / 5</span>
+    </div>
+  </div>
+  <div class="quiz-body">
+    <div class="timer-wrap">
+      <svg viewBox="0 0 100 100" class="timer-svg">
+        <circle cx="50" cy="50" r="44" class="tcircle-bg"/>
+        <circle cx="50" cy="50" r="44" class="tcircle-fill" id="tcircle"/>
+      </svg>
+      <div class="timer-inner" id="timer-num">30</div>
+    </div>
+    <div class="q-card" id="q-card">
+      <div class="q-badge" id="q-badge">MCQ</div>
+      <h2 id="q-text">Question text</h2>
+      <div id="q-options" class="q-options"></div>
+      <button class="btn-next" id="btn-next" onclick="nextQ()" style="display:none">Next Question →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ PAGE: RESULT ═══════════ -->
+<div id="page-result" class="page">
+  <div class="result-wrap">
+    <div class="result-top">
+      <div class="result-score-ring">
+        <svg viewBox="0 0 140 140">
+          <circle cx="70" cy="70" r="60" class="rring-bg"/>
+          <circle cx="70" cy="70" r="60" class="rring-fill" id="rring"/>
+        </svg>
+        <div class="rring-text">
+          <div id="r-score-frac">0/0</div>
+          <div id="r-score-pct">0%</div>
+        </div>
+      </div>
+      <div class="result-meta">
+        <div class="result-grade" id="r-grade">Great!</div>
+        <div class="result-quiz-name" id="r-quiz-name"></div>
+        <div class="result-pills">
+          <div class="rpill correct"><span id="r-correct">0</span> Correct</div>
+          <div class="rpill wrong"><span id="r-wrong">0</span> Wrong</div>
+          <div class="rpill skip"><span id="r-skip">0</span> Skipped</div>
+        </div>
+        <div class="result-btns">
+          <button class="btn-primary" onclick="navigate('quizzes')">Try Another Quiz</button>
+          <button class="btn-ghost" onclick="navigate('history')">View History</button>
+        </div>
+      </div>
+    </div>
+    <div class="review-block">
+      <h3>📋 Review Your Answers</h3>
+      <p class="review-hint">Questions you got wrong or skipped are shown below with explanations.</p>
+      <div id="review-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ PAGE: HISTORY ═══════════ -->
+<div id="page-history" class="page">
+  <div class="page-header">
+    <h2>My Quiz History</h2>
+    <p>Your recent quiz attempts and scores.</p>
+  </div>
+  <div class="history-container">
+    <div id="history-list"></div>
+  </div>
+</div>
+
+<!-- ═══════════ PAGE: ADMIN ═══════════ -->
+<div id="page-admin" class="page">
+  <div class="admin-shell">
+    <aside class="admin-nav">
+      <div class="an-logo">⚡ Admin</div>
+      <ul>
+        <li class="an-active" data-tab="tab-stats" onclick="adminSwitch(this)">📊 Dashboard</li>
+        <li data-tab="tab-quizzes" onclick="adminSwitch(this)">📋 Quizzes</li>
+        <li data-tab="tab-create" onclick="adminSwitch(this)">➕ Create Quiz</li>
+        <li data-tab="tab-users" onclick="adminSwitch(this)">👥 Users</li>
+      </ul>
+    </aside>
+    <main class="admin-content">
+      <div id="tab-stats" class="admin-tab at-active">
+        <div class="tab-header"><h2>Dashboard</h2></div>
+        <div class="stats-grid">
+          <div class="stat-box"><div class="sb-num" id="st-students">—</div><div class="sb-lbl">Students</div></div>
+          <div class="stat-box"><div class="sb-num" id="st-quizzes">—</div><div class="sb-lbl">Quizzes</div></div>
+          <div class="stat-box"><div class="sb-num" id="st-attempts">—</div><div class="sb-lbl">Attempts</div></div>
+          <div class="stat-box"><div class="sb-num" id="st-avg">—</div><div class="sb-lbl">Avg Score</div></div>
+        </div>
+        <div class="dash-tables">
+          <div class="dt-section">
+            <h4>Top Quizzes</h4>
+            <table class="data-table"><thead><tr><th>Title</th><th>Attempts</th><th>Avg Score</th></tr></thead><tbody id="dt-top-quizzes"></tbody></table>
+          </div>
+          <div class="dt-section">
+            <h4>Top Students</h4>
+            <table class="data-table"><thead><tr><th>Name</th><th>Attempts</th><th>Avg Score</th></tr></thead><tbody id="dt-top-students"></tbody></table>
+          </div>
+        </div>
+      </div>
+      <div id="tab-quizzes" class="admin-tab">
+        <div class="tab-header">
+          <h2>All Quizzes</h2>
+          <button class="btn-primary" onclick="adminSwitch(document.querySelector('[data-tab=tab-create]'))">+ New Quiz</button>
+        </div>
+        <div id="admin-quiz-list"></div>
+      </div>
+      <div id="tab-create" class="admin-tab">
+        <div class="tab-header"><h2 id="form-heading">Create New Quiz</h2></div>
+        <div class="quiz-form-wrap">
+          <input type="hidden" id="edit-id"/>
+          <div class="fg"><label>Quiz Title *</label><input id="f-title" placeholder="e.g. World History Quiz"/></div>
+          <div class="fg"><label>Description</label><textarea id="f-desc" placeholder="Short description…" rows="2"></textarea></div>
+          <div class="fg-row">
+            <div class="fg"><label>Category</label><input id="f-cat" placeholder="e.g. Science, Math…"/></div>
+            <div class="fg"><label>Time per Question (sec)</label><input id="f-time" type="number" value="30" min="10" max="300"/></div>
+          </div>
+          <div class="qblock-area">
+            <div class="qba-header">
+              <h3>Questions</h3>
+              <div class="qba-btns">
+                <button class="btn-outline-sm" onclick="addQ('mcq')">+ MCQ</button>
+                <button class="btn-outline-sm" onclick="addQ('tf')">+ True/False</button>
+              </div>
+            </div>
+            <div id="q-blocks"></div>
+          </div>
+          <div class="form-footer">
+            <button class="btn-primary" onclick="submitQuizForm()">💾 Save Quiz</button>
+            <button class="btn-ghost" onclick="clearQuizForm()">✕ Clear</button>
+          </div>
+        </div>
+      </div>
+      <div id="tab-users" class="admin-tab">
+        <div class="tab-header"><h2>All Users</h2></div>
+        <div id="users-table-wrap"></div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ═══════════ MODAL: LOGIN ═══════════ -->
+<div id="login-modal" class="modal-overlay" onclick="closeModalOutside(event,'login-modal')">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('login-modal')">✕</button>
+    <div class="modal-logo">Quiz<span>Master</span></div>
+    <h3>Welcome back</h3>
+    <p class="modal-sub">Sign in to your account</p>
+    <div class="mfg"><label>Email</label><input id="l-email" type="email" placeholder="you@email.com"/></div>
+    <div class="mfg"><label>Password</label><input id="l-pass" type="password" placeholder="••••••••"/></div>
+    <button class="btn-primary w100" onclick="doLogin()">Login</button>
+    <p class="modal-switch">No account? <a onclick="switchModal('login-modal','register-modal')">Sign up free →</a></p>
+  </div>
+</div>
+
+<!-- ═══════════ MODAL: REGISTER ═══════════ -->
+<div id="register-modal" class="modal-overlay" onclick="closeModalOutside(event,'register-modal')">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('register-modal')">✕</button>
+    <div class="modal-logo">Quiz<span>Master</span></div>
+    <h3>Create Account</h3>
+    <p class="modal-sub">Join QuizMaster today</p>
+    <div class="mfg"><label>Full Name</label><input id="r-name" placeholder="Your name"/></div>
+    <div class="mfg"><label>Email</label><input id="r-email" type="email" placeholder="you@email.com"/></div>
+    <div class="mfg"><label>Password</label><input id="r-pass" type="password" placeholder="Min 6 characters"/></div>
+    <div class="mfg"><label>Register as</label>
+      <select id="r-role">
+        <option value="student">Student</option>
+        <option value="admin">Admin</option>
+      </select>
+    </div>
+    <button class="btn-primary w100" onclick="doRegister()">Create Account</button>
+    <p class="modal-switch">Have an account? <a onclick="switchModal('register-modal','login-modal')">Login →</a></p>
+  </div>
+</div>
+
+<script src="static/js/app.js"></script>
+</body>
+</html>
